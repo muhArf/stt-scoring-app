@@ -1,0 +1,8 @@
+streamlit
+faster-whisper
+pydub
+soundfile
+noisereduce
+sentence-transformers
+scikit-learn
+rapidfuzz
