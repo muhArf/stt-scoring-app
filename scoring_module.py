@@ -3,32 +3,14 @@ import re
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import process, fuzz
+from .config import RUBRIC_DATA # Import data rubrik
 
-# Data Rubrik
-RUBRIC_DATA = {
-    "q1": {
-        "rubric": 4,
-        "keywords": ["data preprocessing", "model definition", "training", "evaluation"],
-        "min_confidence": 75,
-        "description": "Langkah-langkah membangun model"
-    },
-    "q2": {
-        "rubric": 3,
-        "keywords": ["transfer learning", "TensorFlow", "pengalaman", "proyek"],
-        "min_confidence": 60,
-        "description": "Pengalaman dengan Transfer Learning"
-    },
-    "q3": {
-        "rubric": 2,
-        "keywords": ["TensorFlow model", "istilah umum"],
-        "min_confidence": 50,
-        "description": "Deskripsi umum TensorFlow"
-    },
-}
+# ... (sisanya tidak berubah)
 
 @st.cache_resource
 def load_embedding_model():
     """Memuat model Sentence Transformer hanya sekali."""
+    # ... (kode loading model)
     with st.spinner('Memuat Model Semantic Similarity...'):
         embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
     st.success("Model Similarity berhasil dimuat.")
@@ -40,10 +22,12 @@ def get_rubric_data(key=None):
         return RUBRIC_DATA.get(key)
     return RUBRIC_DATA
 
+# ... (fungsi normalize_text, compute_confidence_score, compute_rubric_score tetap sama)
+
 def normalize_text(text):
     """Normalisasi teks untuk scoring."""
     text = text.lower()
-    text = re.sub(r'[^\w\s]', '', text) # Hapus tanda baca
+    text = re.sub(r'[^\w\s]', '', text) 
     return text
 
 def compute_confidence_score(embed_model, text, reference_text):
