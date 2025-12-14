@@ -1,14 +1,13 @@
 import streamlit as st
 import os
 import tempfile
-import time # Untuk simulasi progress bar
 from stt_module import load_stt_model, process_audio, transcribe_audio
 from scoring_module import load_embedding_model, compute_confidence_score, compute_rubric_score, get_rubric_data
 
 def main():
     st.set_page_config(layout="centered", page_title="STT & Interview Scoring App")
 
-    # --- Custom CSS (Sama seperti sebelumnya) ---
+    # --- Custom CSS (Untuk UI yang bagus) ---
     st.markdown("""
         <style>
         .stApp {
@@ -77,6 +76,9 @@ def main():
                 
                 progress_bar.progress(100)
                 st.success("Transkripsi Selesai!")
+                
+                # Simpan teks ke session_state agar tidak hilang saat interaksi lain
+                st.session_state.candidate_answer = transcribed_text
                 st.text_area("Hasil Transkripsi", transcribed_text, height=150)
                 
                 # Membersihkan file audio yang sudah diproses
@@ -86,11 +88,7 @@ def main():
     with col2:
         st.subheader("2. Penilaian Jawaban")
 
-        # Input Jawaban
-        # Menggunakan session_state agar teks transkripsi tetap ada saat interaksi lain
-        if uploaded_file is not None and transcribed_text:
-             st.session_state.candidate_answer = transcribed_text
-        
+        # Input Jawaban (diambil dari session state atau input manual)
         candidate_answer = st.text_area(
             "Jawaban Kandidat", 
             value=st.session_state.get('candidate_answer', ''), 
@@ -113,10 +111,8 @@ def main():
             if candidate_answer and reference_answer:
                 with st.spinner("Menghitung Skor..."):
                     
-                    # Hitung Skor Rubrik
+                    # Panggil fungsi scoring dari scoring_module
                     rubric_score, reason = compute_rubric_score(candidate_answer, question_key)
-                    
-                    # Hitung Confidence Score
                     confidence_score = compute_confidence_score(embed_model, candidate_answer, reference_answer)
                     
                     st.markdown("---")

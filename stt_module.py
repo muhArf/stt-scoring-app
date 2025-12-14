@@ -21,46 +21,47 @@ def load_stt_model():
 
 def process_audio(uploaded_file):
     """
-    Menyimpan file yang diunggah, melakukan pra-pemrosesan (Noise Reduction), 
+    Menyimpan file yang diunggah, melakukan pra-pemrosesan (Normalisasi & Noise Reduction), 
     dan mengembalikan path ke file .wav yang sudah diproses.
     """
-    tmp_file_path = None
+    tmp_input_path = None
     processed_audio_path = None
 
+    # Simpan file yang diunggah ke lokasi sementara
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
+        tmp_file.write(uploaded_file.getvalue())
+        tmp_input_path = tmp_file.name
+        
     try:
-        # 1. Simpan file yang diunggah ke lokasi sementara
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            tmp_file_path = tmp_file.name
-            
-        # 2. Konversi/Normalisasi audio menggunakan Pydub
-        audio = AudioSegment.from_file(tmp_file_path)
+        # 1. Konversi/Normalisasi audio menggunakan Pydub
+        audio = AudioSegment.from_file(tmp_input_path)
         audio = audio.set_channels(1).set_frame_rate(16000)
         
-        # Simpan ke file WAV sementara untuk Noise Reduction
+        # Simpan ke file WAV sementara untuk pemrosesan
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_wav_file:
             audio.export(tmp_wav_file.name, format="wav")
             processed_audio_path = tmp_wav_file.name
 
-        # 3. Aplikasi Noise Reduction
+        # 2. Aplikasi Noise Reduction menggunakan soundfile
         data, rate = sf.read(processed_audio_path)
+        
+        # Pastikan data float sebelum noise reduction
+        if data.dtype != 'float64':
+             data = data.astype('float64')
+
         reduced_noise_audio = nr.reduce_noise(y=data, sr=rate, prop_decrease=0.8)
         sf.write(processed_audio_path, reduced_noise_audio, rate)
         
         return processed_audio_path
 
     except Exception as e:
-        st.error(f"Error saat memproses audio: {e}")
-        # Pastikan file sementara dibersihkan jika ada error
-        if tmp_file_path and os.path.exists(tmp_file_path):
-            os.remove(tmp_file_path)
-        if processed_audio_path and os.path.exists(processed_audio_path):
-            os.remove(processed_audio_path)
+        # Menampilkan tipe dan pesan error yang spesifik jika gagal
+        st.error(f"Error saat memproses audio: {type(e).__name__}: {e}")
         return None
     finally:
-        # Bersihkan file input asli yang disimpan sementara
-        if tmp_file_path and os.path.exists(tmp_file_path):
-            os.remove(tmp_file_path)
+        # Selalu bersihkan file input sementara
+        if tmp_input_path and os.path.exists(tmp_input_path):
+            os.remove(tmp_input_path)
 
 
 def transcribe_audio(stt_model, audio_path):

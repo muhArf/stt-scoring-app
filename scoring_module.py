@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import process, fuzz
 
-# Data Rubrik (Disimpan di module scoring, tapi bisa dipindahkan ke config.py jika kompleks)
+# Data Rubrik
 RUBRIC_DATA = {
     "q1": {
         "rubric": 4,
